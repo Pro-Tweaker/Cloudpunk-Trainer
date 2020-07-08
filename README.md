@@ -14,7 +14,7 @@ C:\Users\<username>\AppData\LocalLow\ION LANDS\Cloudpunk
 ### Notes
 After activation, the tool will display only 0 as values.  
 For Global and Player values, you need to go back in the game and be on foot.  
-For Player Car values, you need to be inside you HOVA.
+For Player Car values, you need to be inside you HOVA.  
 Wait until tool display values, then edit.
 ## Screenshots
 ![ScreenShot1](Screenshots/Global.JPG)
