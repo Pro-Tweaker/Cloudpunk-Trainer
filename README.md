@@ -1,7 +1,8 @@
 ﻿# Cloudpunk Trainer
 Explore Nivalis in total freedom !
 ## Compatible Versions
-- Latest Steam 'Butter Update' (01.07.2020 ) [3D32D76C7F402C4BC0B6127B108D5557]
+- Steam 'Butter Update' (01.07.2020 ) [3D32D76C7F402C4BC0B6127B108D5557]
+- Latest Steam (14.07.2020 ) [3D32D76C7F402C4BC0B6127B108D5557]
 ## Backup Save
 ```
 C:\Users\<username>\AppData\LocalLow\ION LANDS\Cloudpunk
