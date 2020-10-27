@@ -1,8 +1,25 @@
 ﻿# Cloudpunk Trainer
 Explore Nivalis in total freedom !
 ## Compatible Versions
-- Latest Steam 'Butter Update' (01.07.2020 ) [3D32D76C7F402C4BC0B6127B108D5557]
+- [Steam 'Cockpit Update' (27.10.2020)](https://steamdb.info/patchnotes/5744405/)
+## Changelog
+### 0.1.1.0
+```
+Updated Global signature and offsets
+Updated Player Car signature and offsets
+```
+Compatible with:
+- [Steam 'Cockpit Update' (27.10.2020)](https://steamdb.info/patchnotes/5744405/)
+### 0.1.0.0
+```
+Initial Release
+```
+Compatible with:
+- [Steam 'Butter Update' (01.07.2020 )](https://steamdb.info/patchnotes/5238168/)
+- [Steam Update (14.07.2020)](https://steamdb.info/patchnotes/5288075/)
 ## Backup Save
+It is advisable to make a copy of your backup before using this tool.  
+You can find your backup here:
 ```
 C:\Users\<username>\AppData\LocalLow\ION LANDS\Cloudpunk
 ```

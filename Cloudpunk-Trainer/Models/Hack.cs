@@ -6,10 +6,7 @@ namespace Cloudpunk_Trainer.Models
     {
         abstract public List<Offset> Offsets { get; }
         abstract public bool Enabled { get; protected set; }
-        abstract public long Value
-        {
-            get;
-        }
+        abstract public long Value { get; }
         abstract public bool Enable();
         abstract public bool Disable();
     }
