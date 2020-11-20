@@ -1,14 +1,14 @@
 ﻿# Cloudpunk Trainer
 Explore Nivalis in total freedom !
 ## Compatible Versions
-- [Steam Steam Update (30.10.2020)](https://steamdb.info/patchnotes/5760339/)
+- [Steam Update (30.10.2020)](https://steamdb.info/patchnotes/5760339/)
 ## Changelog
 ### 0.1.2.0
 ```
 Updated Global offsets
 ```
 Compatible with:
-- [Steam Steam Update (30.10.2020)](https://steamdb.info/patchnotes/5760339/)
+- [Steam Update (30.10.2020)](https://steamdb.info/patchnotes/5760339/)
 ### 0.1.1.0
 ```
 Updated Global signature and offsets
