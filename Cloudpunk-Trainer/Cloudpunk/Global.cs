@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Process_Memory;
+using Pro_Tweaker;
 using Cloudpunk_Trainer.Models;
 
 namespace Cloudpunk_Trainer.Cloudpunk
@@ -33,30 +33,37 @@ namespace Cloudpunk_Trainer.Cloudpunk
 			}
 		}
 
-		public override List<Offset> Offsets { get; } = new List<Offset>()
+        public long Player
         {
-			new Offset("idleMusicTimer", typeof(float), 0xC0),
-			new Offset("advertisementTimer", typeof(float), 0xC4),
-			new Offset("makeCallTimer", typeof(float), 0x4D4),
-			new Offset("money", typeof(int), 0x508),
-			new Offset("numLocationsUnlocked", typeof(int), 0x5A0),
-			new Offset("numRepairs", typeof(int), 0x5A4),
-			new Offset("joosTimePassed", typeof(float), 0x610),
-			new Offset("joosTimeLeft", typeof(float), 0x614),
-			new Offset("alcoholTimePassed", typeof(float), 0x640),
-			new Offset("alcoholTimeLeft", typeof(float), 0x644),
-			new Offset("speedGainTimeLeft", typeof(float), 0x648),
-			new Offset("stimsTimePassed", typeof(float), 0x64C),
-			new Offset("stimsTimeLeft", typeof(float), 0x650),
-			new Offset("pheromonesTimePassed", typeof(float), 0x654),
-			new Offset("pheromonesTimeLeft", typeof(float), 0x658),
-			new Offset("foodCooldown", typeof(float), 0x65C),
-			new Offset("drinkCooldown", typeof(float), 0x660),
-			new Offset("drugCooldown", typeof(float), 0x664),
-			new Offset("timeSinceStart", typeof(float), 0x718)
-		};
+            get
+            {
+                if (memoryCave != null)
+                {
+                    return memory.Reader.ReadInt64(new IntPtr(Value + 0x60));
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
 
-		public Global(Memory memory)
+        public long PlayerCar
+        {
+            get
+            {
+                if (memoryCave != null)
+                {
+                    return memory.Reader.ReadInt64(new IntPtr(Value + 0x70));
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
+        
+        public Global(Memory memory)
 		{
 			this.memory = memory;
 		}
@@ -88,11 +95,11 @@ namespace Cloudpunk_Trainer.Cloudpunk
 
 		public override bool Disable()
 		{
-			memory.Writer.WriteBytes(patchAddress, new byte[] { 0xF3, 0x0F, 0x10, 0x81, 0xC4, 0x00, 0x00, 0x00 });
+			bool success = memory.Writer.WriteBytes(patchAddress, new byte[] { 0xF3, 0x0F, 0x10, 0x81, 0xC4, 0x00, 0x00, 0x00 });
 
 			Enabled = false;
 
-			return true;
+			return success;
 		}
 	}
 }

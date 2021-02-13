@@ -4,9 +4,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Windows.Forms;
+using Pro_Tweaker;
 using Cloudpunk_Trainer.Cloudpunk;
+using Cloudpunk_Trainer.Cloudpunk.Models;
 using Cloudpunk_Trainer.Models;
-using Process_Memory;
+using System.Linq;
+using System.ComponentModel;
 
 namespace Cloudpunk_Trainer
 {
@@ -20,8 +23,19 @@ namespace Cloudpunk_Trainer
 
         // Hacks
         Global global;
-        Player player;
-        PlayerCar playerCar;
+
+        BindingList<Offset> globalOffsets = Offsets.global;
+        BindingList<Offset> playerOffsets = Offsets.player;
+        BindingList<Offset> playerCarOffsets = Offsets.playerCar;
+
+        BindingList<HolocashAccount> holocashAccounts = new BindingList<HolocashAccount>();
+        BindingList<Item> items = new BindingList<Item>();
+
+        BindingSource globalBindingSource = new BindingSource();
+        BindingSource playerBindingSource = new BindingSource();
+        BindingSource playerCarBindingSource = new BindingSource();
+        BindingSource holocashAccountsBindingSource = new BindingSource();
+        BindingSource itemsBindingSource = new BindingSource();
 
         public MainForm()
         {
@@ -37,94 +51,66 @@ namespace Cloudpunk_Trainer
             Utils.ChangeControlStyles(dataGridView1, ControlStyles.OptimizedDoubleBuffer, true);
             Utils.ChangeControlStyles(dataGridView2, ControlStyles.OptimizedDoubleBuffer, true);
             Utils.ChangeControlStyles(dataGridView3, ControlStyles.OptimizedDoubleBuffer, true);
+            Utils.ChangeControlStyles(dataGridView4, ControlStyles.OptimizedDoubleBuffer, true);
+            Utils.ChangeControlStyles(dataGridView5, ControlStyles.OptimizedDoubleBuffer, true);
         }
-
-        List<Offset> globalOffsets;
-        List<Offset> playerOffsets;
-        List<Offset> playerCarOffsets;
-
-        BindingSource globalBindingSource;
-        BindingSource playerBindingSource;
-        BindingSource playerCarBindingSource;
-
+        
         private void MainForm_Load(object sender, EventArgs e)
         {
             memory = new Memory();
 
             global = new Global(memory);
-            player = new Player(memory);
-            playerCar = new PlayerCar(memory);          
 
-            globalOffsets = new List<Offset>();
-            playerOffsets = new List<Offset>();
-            playerCarOffsets = new List<Offset>();
-
-            globalBindingSource = new BindingSource { DataSource = globalOffsets };
-            playerBindingSource = new BindingSource { DataSource = playerOffsets };
-            playerCarBindingSource = new BindingSource { DataSource = playerCarOffsets };
+            globalBindingSource.DataSource = globalOffsets;
+            playerBindingSource.DataSource = playerOffsets;
+            playerCarBindingSource.DataSource = playerCarOffsets;
+            holocashAccountsBindingSource.DataSource = holocashAccounts;
+            itemsBindingSource.DataSource = items;
 
             dataGridView1.DataSource = globalBindingSource;
             dataGridView2.DataSource = playerBindingSource;
             dataGridView3.DataSource = playerCarBindingSource;
-            
-            AddEntries(global, globalBindingSource);
-            AddEntries(player, playerBindingSource);
-            AddEntries(playerCar, playerCarBindingSource);
-            
+            dataGridView4.DataSource = holocashAccountsBindingSource;
+            dataGridView5.DataSource = itemsBindingSource;
+
             dataGridView1.Columns[0].Width = 50;
             dataGridView1.Columns[1].ReadOnly = true;
 
-            searchTimer = new System.Threading.Timer(SearchProcess, null, 0, 250);          
+            searchTimer = new System.Threading.Timer(SearchProcess, null, 0, 250);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(memory.Handle != IntPtr.Zero)
+            if (memory.Handle != IntPtr.Zero)
             {
                 global.Disable();
-                player.Disable();
-                playerCar.Disable();
 
                 memory.CloseHandle();
             }
         }
-
-        private void PatchGame()
-        {
-            global.Enable();
-            player.Enable();
-            playerCar.Enable();
-        }
-
+        
         private void ReadGame()
         {
-            if(global.Enabled)
+            if (global.Enabled)
             {
                 long globalAddress = global.Value;
 
-                UpdateEntriesValues(memory, dataGridView1, globalBindingSource, global, new IntPtr(globalAddress), false);
-            }
+                UpdateEntriesValues(memory, dataGridView1, globalOffsets, new IntPtr(globalAddress), false);
+                UpdateEntriesValues(memory, dataGridView2, playerOffsets, new IntPtr(global.Player), false);
+                UpdateEntriesValues(memory, dataGridView3, playerCarOffsets, new IntPtr(global.PlayerCar), false);
 
-            if (player.Enabled)
-            {
-                long playerAddress = player.Value;
+                HolocashAccounts(globalAddress);
+                InventoryEditor(globalAddress);
 
-                UpdateEntriesValues(memory, dataGridView2, playerBindingSource, player, new IntPtr(playerAddress), false);
-            }
-
-            if (playerCar.Enabled)
-            {
-                long playerCarAddress = playerCar.Value;
-
-                UpdateEntriesValues(memory, dataGridView3, playerCarBindingSource, playerCar, new IntPtr(playerCarAddress), false);
+                // ReadArray<HolocashAccount>(new IntPtr(globalAddress + 0x5a8));
             }
         }
 
         private void SearchProcess(object state)
         {
-            int processId = Process_Memory.Utils.GetProcessIdFromName(EXECUTABLE_NAME);
-            
-            if(processId != -1 && memory.OpenHandle(processId))
+            int processId = Memory.Utils.GetProcessIdFromName(EXECUTABLE_NAME);
+
+            if (processId != -1 && memory.OpenHandle(processId))
             {
                 statusLabel.Text = "Process opened: " + processId;
 
@@ -132,8 +118,7 @@ namespace Cloudpunk_Trainer
 
                 if (!gamePatched)
                 {
-                    gamePatched = true;
-                    PatchGame();                    
+                    gamePatched = global.Enable();
                 }
                 else
                 {
@@ -145,45 +130,35 @@ namespace Cloudpunk_Trainer
                 memory = new Memory();
 
                 global = new Global(memory);
-                player = new Player(memory);
-                playerCar = new PlayerCar(memory);
 
-                statusLabel.Text = "Process has closed !";                              
+                statusLabel.Text = "Process has closed !";
             }
             else
             {
                 statusLabel.Text = "Waiting for " + EXECUTABLE_NAME + " ...";
-            }            
-        }
-
-        private void AddEntries(Hack hack, BindingSource bindingSource)
-        {
-            for (int i = 0; i <= hack.Offsets.Count - 1; i++)
-            {
-                bindingSource.Add(hack.Offsets[i]);
             }
         }
 
-        private void UpdateEntriesValues(Memory memory, DataGridView dataGridView, BindingSource bindingSource, Hack hack, IntPtr baseAddress, bool checkIfIsRunning)
+        private void UpdateEntriesValues(Memory memory, DataGridView dataGridView, BindingList<Offset> bindingList, IntPtr baseAddress, bool checkIfIsRunning)
         {
-            foreach (Offset offset in bindingSource)
+            foreach (Offset offset in bindingList.ToList())
             {
                 string value = "??";
 
-                if(offset.Type == typeof(int))
+                if (offset.Type == typeof(int))
                 {
                     if (offset.Frozen)
                     {
-                        memory.Writer.WriteInt(new IntPtr(hack.Value + offset.OffsetValue), int.Parse(offset.FrozenValue));
+                        memory.Writer.WriteInt(baseAddress + offset.OffsetValue, int.Parse(offset.FrozenValue));
                     }
 
-                    value = memory.Reader.ReadInt(new IntPtr(hack.Value + offset.OffsetValue)).ToString();
+                    value = memory.Reader.ReadInt(baseAddress + offset.OffsetValue).ToString();
                 }
                 else if (offset.Type == typeof(float))
                 {
                     if (offset.Frozen)
                     {
-                        memory.Writer.WriteFloat(new IntPtr(hack.Value + offset.OffsetValue), float.Parse(offset.FrozenValue));
+                        memory.Writer.WriteFloat(baseAddress + offset.OffsetValue, float.Parse(offset.FrozenValue));
                     }
 
                     value = memory.Reader.ReadFloat(baseAddress + offset.OffsetValue).ToString();
@@ -191,8 +166,6 @@ namespace Cloudpunk_Trainer
 
                 offset.Value = value;
             }
-            
-            dataGridView.Refresh();
         }
 
         private void CheckFreeze(object sender, DataGridViewCellEventArgs e, DataGridView dataGridView)
@@ -201,10 +174,10 @@ namespace Cloudpunk_Trainer
             int columnIndex = e.ColumnIndex;
 
             if (rowIndex != -1 && columnIndex == 0)
-            {               
+            {
                 Offset offset = dataGridView.Rows[rowIndex].DataBoundItem as Offset;
                 bool isChecked = (bool)dataGridView[columnIndex, rowIndex].EditedFormattedValue;
-                                
+
                 offset.FrozenValue = offset.Value;
                 offset.Frozen = isChecked;
             }
@@ -233,12 +206,12 @@ namespace Cloudpunk_Trainer
                     }
                     else if (offset.Type == typeof(int))
                     {
-                    
                         int newvalue = int.Parse(value);
+
                         result = memory.Writer.WriteInt(baseAddress + offset.OffsetValue, newvalue);
                     }
 
-                    if(!result)
+                    if (!result)
                     {
                         throw new Exception();
                     }
@@ -250,8 +223,89 @@ namespace Cloudpunk_Trainer
             }
         }
 
+        private void HolocashAccounts(long globalAddress)
+        {
+            IntPtr holocashAccountsPtr = new IntPtr(globalAddress + 0x5a8);
+            IntPtr holocashAccountsArrayAddr = new IntPtr(memory.Reader.ReadInt64(holocashAccountsPtr));
+
+            int holocashAccountsLength = memory.Reader.ReadInt(holocashAccountsArrayAddr + 0x18);
+
+            int index = 0x20;
+            for (int i = 0; i < holocashAccountsLength; i++)
+            {
+                IntPtr holocashAccountPtr = IntPtr.Add(holocashAccountsArrayAddr, index);
+                IntPtr holocashAccountAddr = new IntPtr(memory.Reader.ReadInt64(holocashAccountPtr));
+
+                HolocashAccount newHolocashAccount = new HolocashAccount(holocashAccountAddr);
+
+                newHolocashAccount.Read(memory);
+
+                HolocashAccount oldHolocashAccount = holocashAccounts.SingleOrDefault(p => p.KeyCode == newHolocashAccount.KeyCode);
+
+                if (oldHolocashAccount == null)
+                {
+                    holocashAccountsBindingSource.Add(newHolocashAccount);
+                }
+                else
+                {
+                    oldHolocashAccount.Read(memory); //TODO
+                }
+
+                index += IntPtr.Size;
+            }
+        }
+              
+        private void InventoryEditor(long globalAddress)
+        {
+            IntPtr inventoryPtr = new IntPtr(globalAddress + 0x2A8);
+            IntPtr inventoryArrayAddr = new IntPtr(memory.Reader.ReadInt64(inventoryPtr));
+
+            int inventoryLength = memory.Reader.ReadInt(inventoryArrayAddr + 0x18);
+
+            int index = 0x20;
+            for (int i = 0; i < inventoryLength; i++)
+            {
+                IntPtr itemPtr = IntPtr.Add(inventoryArrayAddr, index);
+                IntPtr itemAddr = new IntPtr(memory.Reader.ReadInt64(itemPtr));
+
+                Item newItem = new Item(itemAddr);
+
+                newItem.Read(memory);
+
+                Item oldItem = items.SingleOrDefault(p => p.LocalizedName == newItem.LocalizedName);
+
+                if (oldItem == null)
+                {
+                    itemsBindingSource.Add(newItem);
+                }
+                else
+                {
+                    oldItem.Read(memory); //TODO
+                }
+
+                index += IntPtr.Size;
+            }
+        }
+
+        private List<T> ReadArray<T>(IntPtr address)
+        {
+            Type type = typeof(T);
+
+            int length = memory.Reader.ReadInt(IntPtr.Add(address, 0x18));
+
+            int index = 0x20;
+            for (int i = 0; i < length; i++)
+            {
+                IntPtr itemAddress = new IntPtr(memory.Reader.ReadInt64(IntPtr.Add(address, index)));
+                                               
+                index += IntPtr.Size;
+            }
+            
+            return new List<T>();
+        }
+
         private void websiteLabel_Click(object sender, EventArgs e)
-        {            
+        {
             DialogResult dialogResult = MessageBox.Show("Would you like to visit the website ?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (dialogResult == DialogResult.Yes)
@@ -267,12 +321,71 @@ namespace Cloudpunk_Trainer
 
         private void dataGridView2_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            EditValue(sender, e, dataGridView2, new IntPtr(player.Value));
+            EditValue(sender, e, dataGridView2, new IntPtr(global.Player));
         }
 
         private void dataGridView3_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            EditValue(sender, e, dataGridView3, new IntPtr(playerCar.Value));
+           EditValue(sender, e, dataGridView3, new IntPtr(global.PlayerCar));
+        }
+
+        private void dataGridView4_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+
+            if (rowIndex != -1)
+            {
+                try
+                {
+                    HolocashAccount holocashAccount = dataGridView4.Rows[rowIndex].DataBoundItem as HolocashAccount;
+
+                    bool result = holocashAccount.Write(memory);
+
+                    if (!result)
+                    {
+                        throw new Exception();
+                    }
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Error writing new values !", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void dataGridView5_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+
+            if (rowIndex != -1)
+            {
+                try
+                {
+                    Item item = dataGridView5.Rows[rowIndex].DataBoundItem as Item;
+
+                    bool result = item.Write(memory);
+
+                    if (!result)
+                    {
+                        throw new Exception();
+                    }
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Error writing new values !", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void dataGridView5_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dataGridView5.IsCurrentCellDirty)
+            {
+                if (dataGridView5.Columns[dataGridView5.CurrentCell.ColumnIndex] is DataGridViewCheckBoxColumn)
+                {
+                    dataGridView5.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            }
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -288,12 +401,6 @@ namespace Cloudpunk_Trainer
         private void dataGridView3_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             CheckFreeze(sender, e, dataGridView3);
-        }
-
-        private void dataGridView2_Enter(object sender, EventArgs e)
-        {
-            dataGridView2.Columns[0].Width = 50;
-            dataGridView2.Columns[1].ReadOnly = true;
         }
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
@@ -313,6 +420,48 @@ namespace Cloudpunk_Trainer
                 dataGridView3.Columns[0].Width = 50;
                 dataGridView3.Columns[1].ReadOnly = true;
             }
+            else if (((TabControl)sender).SelectedIndex == 3) // Holocash Accounts Editor
+            {
+                dataGridView4.Columns[0].ReadOnly = true;
+                dataGridView4.Columns[1].ReadOnly = true;
+            }
+            else if (((TabControl)sender).SelectedIndex == 4) // Inventory Editor
+            {
+                dataGridView5.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.False;
+
+                dataGridView5.Columns[0].ReadOnly = true;
+                dataGridView5.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+
+                dataGridView5.Columns[1].ReadOnly = true;
+                dataGridView5.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+
+                dataGridView5.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dataGridView5.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[4].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[5].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[6].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[7].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[8].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                dataGridView5.Columns[9].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            }
         }
+        
+        private void tabControl_Selecting(object sender, TabControlCancelEventArgs e)
+        {
+            TabPage current = (sender as TabControl).SelectedTab;
+
+            if(current.Text == "Inventory")
+            {
+                Width += 400;
+                tabControl.Width += 400;
+                dataGridView5.Width += 400;
+            }
+            else
+            {
+                Width = 410;
+                tabControl.Width = 396;
+                dataGridView5.Width = 382;
+            }          
+        }        
     }
 }

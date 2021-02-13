@@ -1,10 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Cloudpunk_Trainer.Models
 {
-    public sealed class Offset
+    public sealed class Offset : INotifyPropertyChanged
     {
+        #region Private Backing Fields
+        private string _value;
+        #endregion
+
         public bool Frozen
         {
             get;
@@ -40,8 +45,18 @@ namespace Cloudpunk_Trainer.Models
 
         public string Value
         {
-            get;
-            set;
+            get
+            {
+                return _value;
+            }
+            set
+            {
+                if (value != _value)
+                {
+                    _value = value;
+                    NotifyPropertyChanged();
+                }
+            }
         }
 
         public Offset(string name, Type type, int value)
@@ -49,6 +64,13 @@ namespace Cloudpunk_Trainer.Models
             Name = name;
             Type = type;
             OffsetValue = value;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

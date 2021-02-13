@@ -61,9 +61,8 @@
     <StartupObject>Cloudpunk_Trainer.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Process Memory, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Process Memory\Process Memory\bin\x64\Debug\netstandard2.0\Process Memory.dll</HintPath>
+    <Reference Include="Memory">
+      <HintPath>..\..\Memory\Memory\bin\x64\Release\netstandard2.0\Memory.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -79,8 +78,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cloudpunk\Global.cs" />
-    <Compile Include="Cloudpunk\Player.cs" />
-    <Compile Include="Cloudpunk\PlayerCar.cs" />
+    <Compile Include="Cloudpunk\Models\HolocashAccount.cs" />
+    <Compile Include="Cloudpunk\Models\Item.cs" />
+    <Compile Include="Cloudpunk\Enums\ItemCategory.cs" />
+    <Compile Include="Cloudpunk\Offsets.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

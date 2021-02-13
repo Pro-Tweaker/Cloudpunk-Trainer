@@ -1,9 +1,18 @@
 ﻿# Cloudpunk Trainer
 Explore Nivalis in total freedom !
 ## Compatible Versions
-- [Steam Update (30.10.2020)](https://steamdb.info/patchnotes/5760339/)
-- [Steam Update (18.11.2020)](https://steamdb.info/patchnotes/5839199/)
+- [Steam Update (21.11.2020)](https://steamdb.info/patchnotes/5864652/)
 ## Changelog
+### 1.0.0.0
+```
+Added Holocash Accounts Editor
+Added Inventory Editor
+Implemented INotifyPropertyChanged
+Changed Player and PlayerCar access via Global Struct
+Miscellaneous improvements and fixes
+```
+Compatible with:
+- [Steam Update (21.11.2020)](https://steamdb.info/patchnotes/5864652/)
 ### 0.1.2.0
 ```
 Updated Global offsets
@@ -38,10 +47,12 @@ C:\Users\<username>\AppData\LocalLow\ION LANDS\Cloudpunk
 4. Enjoy
 ### Notes
 After activation, the tool will display only 0 as values.  
-For Global and Player values, you need to go back in the game and be on foot.  
-For Player Car values, you need to be inside you HOVA.  
-Wait until tool display values, then edit.
+For values to update, you need to be in the game.   
+Wait until tool display values, then edit.  
 ## Screenshots
 ![ScreenShot1](Screenshots/Global.JPG)
 ![ScreenShot2](Screenshots/Player.JPG)
 ![ScreenShot3](Screenshots/PlayerCar.JPG)
+![ScreenShot3](Screenshots/Holocash.JPG)
+![ScreenShot3](Screenshots/Inventory.JPG)
+

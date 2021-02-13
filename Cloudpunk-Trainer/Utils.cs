@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Pro_Tweaker;
+using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -34,6 +36,13 @@ namespace Cloudpunk_Trainer
             }
 
             return null;
+        }
+
+        public static string ReadUnityString(Memory memory, IntPtr address)
+        {
+            IntPtr stringAddr = new IntPtr(memory.Reader.ReadInt64(address));
+            int stringLength = memory.Reader.ReadInt(IntPtr.Add(stringAddr, 0x10));
+            return memory.Reader.ReadUnicodeString(IntPtr.Add(stringAddr, 0x14), stringLength * 2);
         }
     }
 }
